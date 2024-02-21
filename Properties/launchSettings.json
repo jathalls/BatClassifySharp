@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "BatClassifySharp": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\BRMTestData\\Test\\Test.wav",
+      "workingDirectory": "C:\\BRMTestData\\Test"
+    }
+  }
+}

@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*************************************************************************
+  Copyright 2024 Justin A T Halls (jathalls@gmail.com)
+  Copyright 2011-2014 Chris Scott (fbscds@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with This program.  If not, see <http://www.gnu.org/licenses/>.
+
+*************************************************************************/
+using NAudio.Dsp;
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -158,7 +177,12 @@ namespace BatClassifySharp
         public static void MaskSpectrum(ref List<float> data, int start, int end, int width)
         {
             float maxData = float.MinValue;
+
+
+
             int max_it = -1;
+
+
             for (int i = start; i < end; i++) if (data[i] > maxData) { maxData = data[i]; max_it = i; }
             if (max_it >= end) return;
 
@@ -263,6 +287,50 @@ namespace BatClassifySharp
             return (num.ToString());
         }
 
+        public static void Filter(ref List<float> alldata,FilterParams? filterParams,int sampleRate)
+        {
+            bool? hpRunTwice = false;
+            bool? lpRunTwice = false;
+            if (filterParams != null)
+            {
+                hpRunTwice = (filterParams.HighPassFilterIterations == 2);
+                lpRunTwice = (filterParams.LowPassFilterIterations == 2);
+                int hiCutoff = filterParams.LowPassFilterFrequency;
+
+                var filterLP = BiQuadFilter.LowPassFilter(sampleRate, hiCutoff, 1);
+
+                for (int i = 0; i < alldata.Count; i++)
+                {
+                    alldata[i] = filterLP.Transform(alldata[i]);
+                }
+                if (lpRunTwice ?? false)
+                {
+                    for (int i = 0; i < alldata.Count; i++)
+                    {
+                        alldata[i] = filterLP.Transform(alldata[i]);
+                    }
+                }
+
+
+
+                int lowCutoff = filterParams.HighPassFilterFrequency;
+
+
+                var filterHP = BiQuadFilter.HighPassFilter(sampleRate, lowCutoff, 1);
+                for (int i = 0; i < alldata.Count; i++)
+                {
+                    alldata[i] = filterHP.Transform(alldata[i]);
+                }
+                if (hpRunTwice ?? false)
+                {
+                    for (int i = 0; i < alldata.Count; i++)
+                    {
+                        alldata[i] = filterHP.Transform(alldata[i]);
+                    }
+                }
+            }
+        }
+
 
     }
 
@@ -288,5 +356,16 @@ namespace BatClassifySharp
         public double SumOfErrorSquare;
         /// <summary>
 
+    }
+
+    public class FilterParams
+    {
+        public int HighPassFilterFrequency { get; set; } = 15000;
+        public int LowPassFilterFrequency { get; set; } = 192000;
+
+        public double FilterQ { get; set; } = 1.0d;
+
+        public int HighPassFilterIterations { get; set; } = 1;
+        public int LowPassFilterIterations { get; set; } = 1;
     }
 }

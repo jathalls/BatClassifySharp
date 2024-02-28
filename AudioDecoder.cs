@@ -1,4 +1,23 @@
-﻿using NAudio.Wave;
+﻿/*************************************************************************
+
+  Copyright 2024 Justin A T Halls (jathalls@gmail.com)
+  Copyright 2011-2014 Chris Scott (fbscds@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with This program.  If not, see <http://www.gnu.org/licenses/>.
+
+*************************************************************************/
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +52,7 @@ namespace BatClassifySharp
             return (result);
         }
 
-        public void ReadFile(string filename, ref List<float> data)
+        public void ReadFile(string filename,  ref List<float> data, float startTime = 0.0f, float segmentDuration = -1.0f,FilterParams? filterParams=null)
         {
             data = new List<float>();
             int sampleRate = 0; ;
@@ -44,21 +63,43 @@ namespace BatClassifySharp
 
 
                 float[] buffer = new float[1024];
-                byte[] bbuffer=new byte[2048];
-                WaveFileReader wavReader = new WaveFileReader(filename);
-                var wavFormat = wavReader.WaveFormat;
-                sampleRate = wavFormat.SampleRate;
-                if (sampleRate < 192000) sampleRate *= 10; // assume time-expanded x10
-                int internalRate = 500000;
-                float ratio = (float)internalRate / (float)sampleRate;
-                ISampleProvider sampleProvider = wavReader.ToSampleProvider();
-                double max = double.MinValue;
-                if (internalRate != sampleRate)
+                //byte[] bbuffer=new byte[2048];
+                using (WaveFileReader wavReader = new WaveFileReader(filename))
                 {
-                    var outFormat = new WaveFormat(internalRate, wavFormat.Channels);
-                    using (var resampler = new MediaFoundationResampler(wavReader, outFormat))
+                    var wavFormat = wavReader.WaveFormat;
+                    sampleRate = wavFormat.SampleRate;
+                    if (sampleRate < 192000) sampleRate *= 10; // assume time-expanded x10
+                    int internalRate = 500000;
+                    float ratio = (float)internalRate / (float)sampleRate;
+                    ISampleProvider sampleProvider = wavReader.ToSampleProvider();
+                    double max = double.MinValue;
+                    Debug.WriteLine($"start={startTime}=>{(int)Math.Floor(startTime)} duration={segmentDuration}");
+                    wavReader.Skip((int)Math.Floor(startTime));
+                    if (segmentDuration > 30.0f) segmentDuration = 30.0f;
+                    if (segmentDuration < 0.0f) segmentDuration = 30.0f;
+                    int targetSamples = (int)(segmentDuration * internalRate);
+                    Debug.WriteLine($"target samples={targetSamples}");
+                    if (internalRate != sampleRate)
                     {
-                        sampleProvider = resampler.ToSampleProvider();
+                        var outFormat = new WaveFormat(internalRate, wavFormat.Channels);
+                        using (var resampler = new MediaFoundationResampler(wavReader, outFormat))
+                        {
+                            sampleProvider = resampler.ToSampleProvider();
+                            int read = 1;
+                            while (read > 0)
+                            {
+                                read = sampleProvider.Read(buffer, 0, buffer.Length);
+                                if (read > 0)
+                                {
+                                    data.AddRange(buffer);
+                                    if (buffer.Max() > max) max = data.Max();
+                                }
+                                if (data.Count > (targetSamples)) break;// no more than 30s
+                            }
+                        }
+                    }
+                    else
+                    {
                         int read = 1;
                         while (read > 0)
                         {
@@ -68,30 +109,20 @@ namespace BatClassifySharp
                                 data.AddRange(buffer);
                                 if (buffer.Max() > max) max = data.Max();
                             }
-                            if (data.Count > (internalRate * 30)) break;// no more than 30s
+                            if (data.Count > targetSamples) break;
                         }
                     }
-                }
-                else
-                {
-                    int read = 1;
-                    while (read > 0)
+
+                    if(filterParams != null)
                     {
-                        read = sampleProvider.Read(buffer, 0, buffer.Length);
-                        if (read > 0)
-                        {
-                            data.AddRange(buffer);
-                            if (buffer.Max() > max) max = data.Max();
-                        }
-                        if (data.Count > (internalRate * 30)) break;
+                        Tools.Filter(ref data, filterParams,internalRate);
                     }
+
+                    Debug.WriteLine($"Max data={max}");
+                    for (int i = 0; i < data.Count; i++) { data[i] = (float)((double)data[i] / max); }
+
+
                 }
-
-                Debug.WriteLine($"Max data={max}");
-                for(int i=0;i<data.Count;i++) { data[i] = (float)((double)data[i] / max); }
-
-
-
 
             }
             catch (Exception ex)
@@ -99,10 +130,7 @@ namespace BatClassifySharp
                 Debug.WriteLine(ex.Message);
 
             }
-            if (data.Count > 0 && sampleRate > 19000)
-            {
-
-            }
+            
         }
 
         

@@ -1,5 +1,26 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿/*************************************************************************
+  Copyright 2024 Justin A T Halls (jathalls@gmail.com)
 
+  Copyright 2011-2014 Chris Scott (fbscds@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with This program.  If not, see <http://www.gnu.org/licenses/>.
+
+*************************************************************************/
+// See https://aka.ms/new-console-template for more information
+
+
+using BatClassifySharp;
 
 string[] class_labels=new string[] { "Bbar", "Malc", "Mbec", "MbraMmys", "Mdau", "Mnat", "NSL", "Paur", "Ppip", "Ppyg", "Rfer", "Rhip" };
 
@@ -10,7 +31,7 @@ foreach (var arg in args ?? new string[0])
 if (args!=null && args.Length > 0)
 {
     string filename = args[0];
-    BatClassifySharp.ClassifierUK classifier = new BatClassifySharp.ClassifierUK();
+    BatClassifySharp.ClassifierUK classifier = ClassifierUK.Instance;
 
     string line = "FilePath,FileName,Date,Time,";
     foreach(var label in class_labels)

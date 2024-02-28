@@ -7,3 +7,30 @@ FilePath			FileName	Date	Time	Bbar	Malc	Mbec	MbraMmys	Mdau	Mnat	NSL		Paur	Ppip	P
 C:/BRMTestData/Test	Test		NA		NA		0.17	0		0		0.02		0		.01		0.98	0.01	0.5		0.01	0.07	0.01
 FilePath	FileName	Date	Time	Bbar	Malc	Mbec	MbraMmys	Mdau	Mnat	NSL	Paur	Ppip	Ppyg	Rfer	Rhip
 C:/BRMTestData/Test	Test	NA	NA	0.01	0	0	0.01	0	0	0.11	0.06	0.98	0.54	0	0
+
+
+Segment Features
+0	Area
+1	Freq = PowerSpectrum centroid
+2	BW = PowerSpectrum bandwidth
+3	Skew = PowerSpectrum Skew
+4	Kurtosis = PowerSpectrum Kurtosis
+5	Q = freq/bw
+6	GI PowerSpectrum
+7	.025 Quantile PS
+8	.25 Quantile PS
+9	.5 Quantile PS
+10	.75 Quantile PS
+11	.975 Quantile PS
+12	.975-.025 Quantiles
+13	.75-.25 Quantiles
+14	Centroid Temporal Envelope
+15	Width Temporal Envelope
+16	Skew Temporal Envelope
+17	Kurtosis Temporal Envelope
+18	GI Temporal Envelope
+19	Centroid Histogram
+20	Width Histogram
+21	Skew Histogram
+22	Kurtosis Histogram
+23	GI Histogram

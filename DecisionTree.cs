@@ -1,4 +1,23 @@
-﻿using System;
+﻿/*************************************************************************
+  Copyright 2024 Justin A T Halls (jathalls@gmail.com)
+
+  Copyright 2011-2014 Chris Scott (fbscds@gmail.com)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with This program.  If not, see <http://www.gnu.org/licenses/>.
+
+*************************************************************************/
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -161,7 +180,7 @@ namespace BatClassifySharp
             return;
         }
 
-        public int Search(List<float> data)
+        public int Search(List<float> features)
         {
             int index = 0;
             int node_index = 0;
@@ -171,18 +190,18 @@ namespace BatClassifySharp
                 if (index >= index_lut.Length) return 0;
                 node_index = index_lut[index];
                 if (nodes[node_index].leaf) { break; }
-                index = (data.Count>nodes[node_index].col 
-                    && data[nodes[node_index].col] >= nodes[node_index].threshold) 
+                index = (features.Count>nodes[node_index].col 
+                    && features[nodes[node_index].col] >= nodes[node_index].threshold) 
                     ? (index * 2 + 2) : (index * 2 + 1);
             }
 
             return node_index;
         }
 
-        public void Predict(List<float> data,ref Dictionary<string,float> result)
+        public void Predict(List<float> features,ref Dictionary<string,float> result)
         {
             if (result == null) result = new Dictionary<string, float>();
-            var probs = nodes[Search(data)].probability;
+            var probs = nodes[Search(features)].probability;
             foreach(var p in probs)
             {
                 

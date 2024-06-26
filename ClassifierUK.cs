@@ -19,15 +19,21 @@
 *************************************************************************/
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace BatClassifySharp
 {
     public class ClassifierUK
     {
         public string[] class_labels = new string[] { "Bbar", "Malc", "Mbec", "MbraMmys", "Mdau", "Mnat", "NSL", "Paur", "Ppip", "Ppyg", "Rfer", "Rhip" };
+
+        public enum SaveMode { NONE, SAVE, APPEND};
         private static DateTime ReadTime(string filename)
         {
             return File.GetCreationTime(filename);
@@ -104,9 +110,12 @@ namespace BatClassifySharp
 
         private FilterParams? filterParams = null;
 
-        public RecordingResults AutoIdFile(string file, bool spectrograms, float startTime=0.0f, float duration=-1.0f,bool filter=false,
+        private Bitmap? combinedBitmap = null;
+
+        public RecordingResults AutoIdFile(string file, SaveMode saveMode=SaveMode.NONE, float startTime=0.0f, float duration=-1.0f,bool filter=false,
             int HPFreq=12000, int HPIterations=1, int LPFreq=192000,int LPIterations=1,double FilterQ=1.0d )
         {
+            combinedBitmap = null;
             RecordingResults recordingResults=new RecordingResults();
             if (filter)
             {
@@ -120,8 +129,8 @@ namespace BatClassifySharp
 
             var blobs = getBlobs(file,ref recordingResults,startTime,duration,out mImage spectro,filterParams); 
             if (blobs == null) return (recordingResults);
-
-            foreach(var blob in blobs)
+            int combinedBlobs = 0;
+            foreach (var blob in blobs)
             {
                 if (blob.Value.Area() > 40)
                 {
@@ -130,12 +139,31 @@ namespace BatClassifySharp
                     if (segment.Width() < 6) continue;
                     
                     segment.LogCompress(20.0f);
+
                     
-                    if (spectrograms) segment.Save(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file));
+
+                    if (saveMode != SaveMode.NONE)
+                    {
+                        if (saveMode == SaveMode.SAVE)
+                        {
+                            combinedBitmap = null;
+                            segment.Save(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file),combinedBmp: combinedBitmap);
+                        }else if (saveMode == SaveMode.APPEND)
+                        {
+                            if(combinedBitmap == null)
+                            {
+                                combinedBitmap = new Bitmap(2, segment.Height());
+                            }
+                            combinedBitmap=segment.Save(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file), combinedBmp: combinedBitmap);
+                            combinedBlobs++;
+                        }
+                        Debug.WriteLine($"{combinedBlobs} - New CombinedBmp={combinedBitmap.Width}");
+                    }
                     List<float> features=new List<float>();
                     segment.SegmentFeatures(out features);
 
                     FeatureListByBlobs.Add((blob.Value, features));
+                    Debug.WriteLine($"FeatureListByBlobs has {FeatureListByBlobs.Count} blobs");
 
                     var probs=BBar.Predict(features);
                     List<string> labels=new List<string>();
@@ -195,6 +223,20 @@ namespace BatClassifySharp
 
 
                 }
+            }
+
+            if(combinedBitmap != null)
+            {
+
+                string filePath = Path.GetDirectoryName(file);
+                string fileName = Path.GetFileNameWithoutExtension(file);
+                fileName += $"_{startTime}.PNG";
+                fileName=Path.Combine(filePath,fileName);
+                if (File.Exists(fileName))
+                {
+                    File.Delete(fileName);
+                }
+                combinedBitmap.Save(fileName,ImageFormat.Png);
             }
 
             return (recordingResults);

@@ -39,7 +39,7 @@ if (args!=null && args.Length > 0)
         line += $"{label},";
     }
     Console.WriteLine (line);
-    var result = classifier.AutoIdFile(filename,false);
+    var result = classifier.AutoIdFile(filename,ClassifierUK.SaveMode.APPEND);
     Console.Write($"{Path.GetFullPath(filename)}," +
         $"{Path.GetFileName(filename)}," +
         $"{result.date}," +

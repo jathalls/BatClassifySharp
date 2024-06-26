@@ -162,7 +162,9 @@ namespace BatClassifySharp
             //Not Implemented
         }
 
-        public void Save(string? filePath,string? fileName,float scale=0.4f)
+        
+
+        public Bitmap Save(string? filePath,string? fileName,float scale=0.4f,Bitmap? combinedBmp=null)
         {
             filePath=Path.GetDirectoryName(filePath??"");
             Debug.WriteLine($"Save {fileName} to {filePath}, size={width},{height}");
@@ -214,14 +216,47 @@ namespace BatClassifySharp
                         bmpX++;
                     }
 
-                    
-                    
 
-                    bmp.Save(Path.Combine(filePath ?? "", extFile + $"-{index}.png"), ImageFormat.Png);
+
+                    if (combinedBmp==null)
+                    {
+                        bmp.Save(Path.Combine(filePath ?? "", extFile + $"-{index}.png"), ImageFormat.Png);
+                        combinedBmp = bmp;
+                    }else
+                    {
+                        combinedBmp=AppendBitmap(combinedBmp, bmp);
+                    }
                     xStart += 2000;
                     index++;
                 } while (xStart < width);
             }
+            return combinedBmp;
+        }
+
+        private Bitmap AppendBitmap(Bitmap? combinedBmp, Bitmap bmp)
+        {
+            if (combinedBmp == null) return (bmp);
+            int height=(int)Math.Max(combinedBmp?.Height??128, bmp.Height);
+            Bitmap newBitmap=new Bitmap((combinedBmp?.Width??0)+bmp.Width+2,height);
+            Debug.WriteLine($"Append {bmp.Width} to combined {combinedBmp.Width} => {newBitmap.Width}");
+            using (Graphics g = Graphics.FromImage(newBitmap))
+            {
+                int xStart = (combinedBmp?.Width ?? 0) + 2;
+                g.DrawImage(combinedBmp, 0, 0);
+                g.DrawImage(bmp, xStart, 0);
+                for (int i = 10; i <bmp.Height; i += 10)
+                {
+
+                    Pen pen;
+                    if (i == 50) { pen = new Pen(Brushes.Red); }
+                    else pen = new Pen(Brushes.Green);
+
+                    g.DrawLine(pen, new PointF(xStart, bmp.Height-i), new PointF(xStart + bmp.Width, bmp.Height-i));
+
+                }
+            }
+            
+            return (newBitmap);
         }
 
         public void AppendToFile(string fileName)

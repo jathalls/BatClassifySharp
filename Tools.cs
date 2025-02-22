@@ -52,7 +52,7 @@ namespace BatClassifySharp
 
             //double[] dIndex = new double[end - start];
             //for (int i = 0; i < dIndex.Length; i++) { dIndex[i] = (double)index[i]; }
-            //Analyze(dIndex, out DescriptiveResult desc);
+            //analyse(dIndex, out DescriptiveResult desc);
 
             double centroid = 0.0d;
             for (int i = 0; i < x.Length; i++)
